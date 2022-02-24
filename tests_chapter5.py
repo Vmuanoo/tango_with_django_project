@@ -263,3 +263,4 @@ class Chapter5PopulationScriptTests(TestCase):
                 raise ValueError(f"{FAILURE_HEADER}The page '{title}' belonging to category '{category}' was not found in the database produced by populate_rango.{FAILURE_FOOTER}")
             
             self.assertEqual(page.category, category)
+            
