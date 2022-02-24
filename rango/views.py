@@ -2,7 +2,37 @@ from django.shortcuts import render
 from django.http import HttpResponse
 from rango.models import Category
 from rango.models import Page
+from rango.forms import CategoryForm
+from django.shortcuts import redirect
+from rango.forms import PageForm
+from django.shortcuts import redirect
+from django.urls import reverse
 # Create your views here.
+
+def add_page(request, category_name_slug):
+    try:
+        category = Category.objects.get(slug=category_name_slug)
+    except Category.DoesNotExist:
+        category = None
+
+    if category is None:
+        return redirect('/rango/')
+    form = PageForm()
+    if request.method == 'POST':
+        form = PageForm(request.POST)
+        if form.is_valid():
+            if category:
+                page = form.save(commit=False)
+                page.category = category
+                page.views = 0
+                page.save()
+                return redirect(reverse('rango:show_category',
+                                        kwargs={'category_name_slug':
+                                                category_name_slug}))
+        else:
+            print(form.errors)
+    context_dict = {'form': form, 'category': category}
+    return render(request, 'rango/add_page.html', context=context_dict)
 
 def show_category(request,category_name_slug):
     context_dict = {}
@@ -18,11 +48,6 @@ def show_category(request,category_name_slug):
     return render(request,'rango/category.html',context_dict)
 
 def index(request):
-    # Construct a dictionary to pass to the template engine as its context.
-    # Note the key boldmessage is the same as {{ boldmessage }} in the template!
-    # Return a rendered response to send to the client.
-    # We make use of the shortcut function to make our lives easier.
-    # Note that the first parameter is the template we wish to use.
 
     category_list = Category.objects.order_by('-likes')[:5]
     page_list = Page.objects.order_by('-views')[:5]
@@ -34,11 +59,26 @@ def index(request):
     context_dict['pages'] = page_list
     return render(request, 'rango/index.html', context_dict)
 
-    # return HttpResponse("Rango says hey there partner! <a href='/rango/about/'>About</a>")
+   
 def about(request):
     
-
     return render(request, 'rango/about.html')
-    #return HttpResponse("Rango says here is the about page. <a href='/rango/'>Index</a>")
- 
+   
+def add_category(request):
+    form = CategoryForm()
+
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+
+        if form.is_valid():
+
+            cat=form.save(commit=True)
+            print(cat, cat.slug)
+
+            return redirect('/rango/')
+        else:
+            print(form.errors)
+            
+    return render(request, 'rango/add_category.html', {'form': form})
+
 
